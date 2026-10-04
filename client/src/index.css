@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Instrument Sans", system-ui, sans-serif;
+  --font-serif: "Newsreader", Georgia, serif;
+  --color-paper: #f5f6f8;
+  --color-ink: #1c2030;
+  --color-rule: #dde1e8;
+  --color-brand: #2c3e91;
+  --color-high: #b42318;
+  --color-medium: #a8650b;
+  --color-low: #1d7a4b;
+}
+
+body { @apply bg-paper font-sans text-ink antialiased; }

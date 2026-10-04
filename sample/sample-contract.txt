@@ -1,0 +1,19 @@
+SOFTWARE SERVICES AGREEMENT
+
+This Agreement is made between Northwind Analytics Ltd ("Provider") and Contoso Retail Inc ("Customer").
+
+1. Services. Provider will deliver a cloud analytics platform and related support as described in Schedule A.
+
+2. Fees and Payment. Customer shall pay USD 12,000 per month, invoiced monthly in advance. Invoices are due within 15 days of receipt. Late payments accrue interest at 2% per month.
+
+3. Term and Renewal. The initial term is 12 months from the Effective Date. The Agreement renews automatically for successive 12-month terms unless either party gives written notice of non-renewal at least 90 days before the end of the then-current term.
+
+4. Termination. Either party may terminate for material breach if the breach is not cured within 30 days of written notice. Provider may terminate for convenience on 14 days' notice. Customer may not terminate for convenience during the initial term, and no fees are refundable on termination.
+
+5. Confidentiality. Each party shall keep the other party's Confidential Information secret and use it only to perform this Agreement. These obligations survive for 2 years after termination.
+
+6. Limitation of Liability. Provider's total liability under this Agreement is limited to the fees paid in the 3 months preceding the claim. Provider is not liable for indirect, incidental or consequential damages, including lost profits or data loss.
+
+7. Governing Law. This Agreement is governed by the laws of the State of Delaware. Disputes shall be resolved in the courts of Wilmington, Delaware.
+
+8. Entire Agreement. This Agreement is the entire agreement between the parties and may be amended only in writing signed by both parties.
