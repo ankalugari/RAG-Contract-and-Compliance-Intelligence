@@ -1,6 +1,12 @@
 // Thin fetch wrapper for the backend
+const API_BASE = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '');
+
 const call = async (path, opts) => {
-  const res = await fetch('/api' + path, opts);
+  const res = await fetch(API_BASE + path, opts);
+  const contentType = res.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    throw new Error('The API returned a web page instead of JSON. Set VITE_API_URL in Netlify to your Render API URL ending in /api, then redeploy.');
+  }
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Request failed');
   return data;

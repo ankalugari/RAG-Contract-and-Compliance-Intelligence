@@ -37,8 +37,9 @@ Put your key in `.env`:
 
 ```
 GROQ_API_KEY=your_key_here
-GROQ_MODEL=openai/gpt-oss-120b
 ```
+
+The default Groq model is `openai/gpt-oss-20b`.
 
 Then run:
 
@@ -55,6 +56,25 @@ npm run dev
 ```
 
 Open http://localhost:5173
+
+## Deploy
+
+The frontend and API are deployed separately: Netlify hosts the Vite page, and Render runs the Express server.
+
+**1. Deploy the API on Render**
+
+- Push this repository to GitHub.
+- In Render, choose **New** -> **Blueprint**, connect the repository, and apply the settings in `render.yaml`.
+- Add your Groq API key as the `GROQ_API_KEY` environment variable for the `contract-intelligence-api` service. Keep it in Render's environment settings; do not put it in the frontend.
+- Wait for the service to deploy, then copy its public URL, such as `https://contract-intelligence-api.onrender.com`.
+
+**2. Deploy the page on Netlify**
+
+- Import the same GitHub repository as a new Netlify site. The root `netlify.toml` configures the Vite build and publish directory.
+- In the site's environment variables, add `VITE_API_URL` with the Render URL followed by `/api`, for example `https://contract-intelligence-api.onrender.com/api`.
+- Trigger a new deploy so Vite includes that API URL in the built page.
+
+After both deploys finish, open the Netlify URL and upload the contract again. Documents are kept in server memory and disappear when the API restarts.
 
 ## Remember
 

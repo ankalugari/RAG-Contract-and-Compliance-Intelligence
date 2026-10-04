@@ -10,11 +10,17 @@ export default function App() {
   const [docs, setDocs] = useState([]);
   const [active, setActive] = useState(null);
   const [tab, setTab] = useState('ask');
+  const [loadError, setLoadError] = useState('');
 
   const refresh = async (select) => {
-    const list = await api.docs();
-    setDocs(list);
-    setActive((cur) => select ?? (list.some((d) => d.id === cur) ? cur : list[0]?.id));
+    try {
+      const list = await api.docs();
+      setDocs(list);
+      setActive((cur) => select ?? (list.some((d) => d.id === cur) ? cur : list[0]?.id));
+      setLoadError('');
+    } catch (error) {
+      setLoadError(error.message || 'Could not connect to the API.');
+    }
   };
   useEffect(() => { refresh(); }, []);
 
@@ -32,6 +38,7 @@ export default function App() {
             </button>
           ))}
         </nav>
+        {loadError && <p role="alert" className="border-b border-red-200 bg-red-50 px-8 py-3 text-sm text-red-800">{loadError}</p>}
         {!doc ? (
           <div className="m-auto max-w-sm text-center">
             <p className="font-serif text-2xl">Upload a contract to begin</p>
