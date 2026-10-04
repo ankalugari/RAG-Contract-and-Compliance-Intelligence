@@ -3,15 +3,21 @@ import { retrieve } from './rag.js';
 
 const MODEL = process.env.GROQ_MODEL || 'openai/gpt-oss-20b';
 let client;
-const ask = (messages, json = false) =>
+const ask = (messages, maxCompletionTokens) =>
   (client ??= new Groq({ apiKey: process.env.GROQ_API_KEY })).chat.completions
     .create({
       model: MODEL,
       messages,
-      temperature: 0, 
-      ...(json && { response_format: { type: 'json_object' } }), 
+      temperature: 0,
+      ...(maxCompletionTokens && { max_completion_tokens: maxCompletionTokens }),
     })
-    .then((r) => r.choices[0].message.content);
+    .then((r) => {
+      const choice = r.choices[0];
+      if (choice.finish_reason === 'length') {
+        throw new Error('The contract review response was truncated. Please run the review again.');
+      }
+      return choice.message.content;
+    });
 
 const numbered = (chunks) => chunks.map((c, i) => `[${i + 1}] ${c.text}`).join('\n\n');
 
@@ -58,13 +64,21 @@ export async function review(docId) {
         role: 'system',
         content:
           'You are a contract compliance reviewer. For every section below, judge ONLY from the excerpts under it. ' +
-          'Return JSON: {"results":[{"check":"<section name>","status":"present|missing","risk":"low|medium|high",' +
+          'Output one complete JSON object only, with no markdown fences or prose. Keep each summary and recommendation concise. ' +
+          'Use this shape: {"results":[{"check":"<section name>","status":"present|missing","risk":"low|medium|high",' +
           '"summary":"one sentence","recommendation":"one sentence"}]}. ' +
           'If the excerpts do not contain the clause, status is "missing". Risk is the exposure to the party signing the contract.',
       },
       { role: 'user', content: context },
     ],
-    true,
+    4096,
   );
-  return JSON.parse(raw).results.map((r) => ({ ...r, evidence: found[names.indexOf(r.check)]?.[0]?.text }));
+  const json = raw.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
+  let results;
+  try {
+    results = JSON.parse(json).results;
+  } catch {
+    throw new Error('The model returned incomplete or invalid JSON for the contract review. Please run it again.');
+  }
+  return results.map((r) => ({ ...r, evidence: found[names.indexOf(r.check)]?.[0]?.text }));
 }
