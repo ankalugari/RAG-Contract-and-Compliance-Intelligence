@@ -190,7 +190,6 @@ npm start
 cd client
 npm run dev
 ```
-```
 Open the URL shown by Vite in the terminal.
 
 Tech Stack
@@ -203,7 +202,7 @@ Node.js + Express
 Groq LLM + RAG
       ↓
 MySQL
-```
+
 <img width="1017" height="245" alt="image" src="https://github.com/user-attachments/assets/690517c1-9e33-4b3a-ab6c-c0ff322a5468" />
 <img width="1009" height="292" alt="image" src="https://github.com/user-attachments/assets/8c6e07ff-fa45-452d-b0cb-11c3070c1de6" />
 
