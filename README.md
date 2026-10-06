@@ -184,10 +184,9 @@ cd server
 npm start
 6. Start the Frontend
 ```
+## Open another terminal:
 
 ```
-Open another terminal:
-
 cd client
 npm run dev
 
