@@ -1,51 +1,193 @@
 import { useEffect, useState } from 'react';
+
+import {
+  Alert,
+  Button,
+  Empty,
+  Layout,
+  Space,
+  Typography
+} from 'antd';
+
 import { api } from './api';
+
 import Documents from './components/Documents';
+
 import Chat from './components/Chat';
+
 import Review from './components/Review';
 
-const TABS = { ask: 'Ask questions', review: 'Compliance review' };
+const { Header, Content, Sider } = Layout;
+
+const { Title } = Typography;
 
 export default function App() {
   const [docs, setDocs] = useState([]);
+
   const [active, setActive] = useState(null);
+
   const [tab, setTab] = useState('ask');
-  const [loadError, setLoadError] = useState('');
 
-  const refresh = async (select) => {
+  const [error, setError] = useState('');
+
+  async function loadDocuments(selectId = null) {
     try {
-      const list = await api.docs();
-      setDocs(list);
-      setActive((cur) => select ?? (list.some((d) => d.id === cur) ? cur : list[0]?.id));
-      setLoadError('');
-    } catch (error) {
-      setLoadError(error.message || 'Could not connect to the API.');
-    }
-  };
-  useEffect(() => { refresh(); }, []);
+      const result = await api.docs();
 
-  const doc = docs.find((d) => d.id === active);
+      setDocs(result);
+
+      if (selectId) {
+        setActive(selectId);
+        setTab('ask');
+        setError('');
+        return;
+      }
+
+      setActive((current) => {
+        if (
+          result.some(
+            (doc) => doc.id === current
+          )
+        ) {
+          return current;
+        }
+
+        return result[0]?.id || null;
+      });
+
+      setError('');
+    } catch (err) {
+      setError(
+        err.message ||
+        'Could not load contracts'
+      );
+    }
+  }
+
+  useEffect(() => {
+    loadDocuments();
+  }, []);
+
+  async function handleUploadSuccess(id) {
+    await loadDocuments(id);
+  }
+
+  const activeDocument = docs.find(
+    (doc) => doc.id === active
+  );
+
+  function updateDocument(updated) {
+    setDocs((current) =>
+      current.map((doc) =>
+        doc.id === updated.id
+          ? updated
+          : doc
+      )
+    );
+  }
+
+  function openAskQuestions() {
+    setTab('ask');
+  }
+
+  function openComplianceReview() {
+    setTab('review');
+  }
 
   return (
-    <div className="flex h-screen">
-      <Documents docs={docs} active={active} onSelect={setActive} onChange={refresh} />
-      <main className="flex min-w-0 flex-1 flex-col">
-        <nav className="flex gap-6 border-b border-rule bg-white px-8">
-          {Object.entries(TABS).map(([key, label]) => (
-            <button key={key} onClick={() => setTab(key)}
-              className={`border-b-2 py-4 text-sm font-medium ${tab === key ? 'border-brand text-brand' : 'border-transparent text-ink/60 hover:text-ink'}`}>
-              {label}
-            </button>
-          ))}
-        </nav>
-        {loadError && <p role="alert" className="border-b border-red-200 bg-red-50 px-8 py-3 text-sm text-red-800">{loadError}</p>}
-        {!doc ? (
-          <div className="m-auto max-w-sm text-center">
-            <p className="font-serif text-2xl">Upload a contract to begin</p>
-            <p className="mt-2 text-ink/60">PDF or text files up to 10 MB. Try sample/sample-contract.txt.</p>
-          </div>
-        ) : tab === 'ask' ? <Chat key={doc.id} doc={doc} /> : <Review key={doc.id} doc={doc} />}
-      </main>
-    </div>
+    <Layout
+      style={{
+        minHeight: '100vh'
+      }}
+    >
+      <Sider
+        width={320}
+        theme="light"
+      >
+        <Documents
+          docs={docs}
+          active={active}
+          onSelect={setActive}
+          onUploadSuccess={handleUploadSuccess}
+          onChange={loadDocuments}
+          onMetadataSave={updateDocument}
+        />
+      </Sider>
+
+      <Layout>
+        <Header
+          style={{
+            background: '#fff',
+            padding: '0 24px'
+          }}
+        >
+          <Space>
+            <Title
+              level={4}
+              style={{
+                margin: 0
+              }}
+            >
+              Contract and Compliance Intelligence
+            </Title>
+
+            <Button
+              type={
+                tab === 'ask'
+                  ? 'primary'
+                  : 'default'
+              }
+              onClick={openAskQuestions}
+            >
+              Ask Questions
+            </Button>
+
+            <Button
+              type={
+                tab === 'review'
+                  ? 'primary'
+                  : 'default'
+              }
+              onClick={openComplianceReview}
+            >
+              Compliance Review
+            </Button>
+          </Space>
+        </Header>
+
+        <Content
+          style={{
+            padding: 24
+          }}
+        >
+          {error && (
+            <Alert
+              message={error}
+              type="error"
+              showIcon
+              style={{
+                marginBottom: 16
+              }}
+            />
+          )}
+
+          {!activeDocument ? (
+            <Empty
+              description="Upload a contract to begin"
+            />
+          ) : tab === 'ask' ? (
+            <Chat
+              key={activeDocument.id}
+              doc={activeDocument}
+            />
+          ) : (
+            <Review
+              key={activeDocument.id}
+              doc={activeDocument}
+            />
+          )}
+        </Content>
+      </Layout>
+    </Layout>
   );
 }

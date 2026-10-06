@@ -1,22 +1,129 @@
-// Thin fetch wrapper for the backend
-const API_BASE = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '');
+const API_BASE = (
+  import.meta.env.VITE_API_URL || '/api'
+).replace(/\/$/, '');
 
-const call = async (path, opts) => {
-  const res = await fetch(API_BASE + path, opts);
-  const contentType = res.headers.get('content-type') || '';
-  if (!contentType.includes('application/json')) {
-    throw new Error('The API returned a web page instead of JSON. Set VITE_API_URL in Netlify to your Render API URL ending in /api, then redeploy.');
+async function callApi(path, options = {}) {
+  const response = await fetch(
+    API_BASE + path,
+    options
+  );
+
+  const type =
+    response.headers.get('content-type') || '';
+
+  if (!type.includes('application/json')) {
+    throw new Error(
+      'Server returned an invalid response'
+    );
   }
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Request failed');
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.error || 'Request failed'
+    );
+  }
+
   return data;
-};
-const post = (body) => ({ method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+}
+
+function postData(data) {
+  return {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(data)
+  };
+}
+
+function getSessionId() {
+  let id = localStorage.getItem(
+    'contract-intelligence-session'
+  );
+
+  if (!id) {
+    id = crypto.randomUUID();
+
+    localStorage.setItem(
+      'contract-intelligence-session',
+      id
+    );
+  }
+
+  return id;
+}
 
 export const api = {
-  docs: () => call('/docs'),
-  upload: (file) => { const form = new FormData(); form.append('file', file); return call('/docs', { method: 'POST', body: form }); },
-  remove: (id) => call('/docs/' + id, { method: 'DELETE' }),
-  chat: (body) => call('/chat', post(body)),
-  review: (docId) => call('/review', post({ docId })),
+  sessionId: () => getSessionId(),
+
+  docs: () => {
+    return callApi('/docs');
+  },
+
+  upload: (file) => {
+    const formData = new FormData();
+
+    formData.append('file', file);
+
+    return callApi('/docs', {
+      method: 'POST',
+      body: formData
+    });
+  },
+
+  remove: (id) => {
+    return callApi(`/docs/${id}`, {
+      method: 'DELETE'
+    });
+  },
+
+  updateMetadata: (id, metadata) => {
+    return callApi(`/docs/${id}/metadata`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        metadata
+      })
+    });
+  },
+
+  chatHistory: (scope, sessionId) => {
+    return callApi(
+      `/chat/${scope}?sessionId=${encodeURIComponent(
+        sessionId
+      )}`
+    );
+  },
+
+  clearChat: (scope, sessionId) => {
+    return callApi(
+      `/chat/${scope}?sessionId=${encodeURIComponent(
+        sessionId
+      )}`,
+      {
+        method: 'DELETE'
+      }
+    );
+  },
+
+  chat: (data) => {
+    return callApi(
+      '/chat',
+      postData({
+        ...data,
+        sessionId: getSessionId()
+      })
+    );
+  },
+
+  review: (docId) => {
+    return callApi(
+      '/review',
+      postData({ docId })
+    );
+  }
 };

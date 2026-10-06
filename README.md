@@ -4,21 +4,23 @@ Upload a contract and ask questions about it. The app answers from the contract 
 
 ## How it works
 
-**1. Upload**
+**1. Upload and index**
 
 - You upload a PDF or text file.
-- The text is cut into small pieces.
-- Each piece is saved with numbers that show its meaning.
+- Contract type, parties, dates, governing law, jurisdiction, status, and tags are extracted when possible.
+- The text is divided into overlapping passages and embedded for semantic search.
+- Extracted metadata is editable in the **Contract metadata** panel. Extraction failures do not block upload.
 
 **2. Ask a question**
 
-- Your question is matched with the 5 closest pieces.
+- Search the selected contract or all uploaded contracts, with optional metadata and effective-date filters.
+- Your question is matched with the 5 closest passages that satisfy the filters.
 - The AI (Groq) reads only those pieces and writes the answer.
 - If the answer is not in the contract, it says "Not found in the contract."
 
 **3. Review**
 
-- The app checks 8 important points, like termination, payment and data protection.
+- The app checks 8 important points, like termination, payment and data protection, in the selected contract.
 - The AI marks each one as present or missing, with low, medium or high risk.
 
 ## Run it
@@ -74,7 +76,9 @@ The frontend and API are deployed separately: Netlify hosts the Vite page, and R
 - In the site's environment variables, add `VITE_API_URL` with the Render URL followed by `/api`, for example `https://contract-intelligence-api.onrender.com/api`.
 - Trigger a new deploy so Vite includes that API URL in the built page.
 
-After both deploys finish, open the Netlify URL and upload the contract again. Documents are kept in server memory and disappear when the API restarts.
+After both deploys finish, open the Netlify URL and upload the contract again. Documents, extracted metadata, and vectors are kept in server memory and disappear when the API restarts.
+
+Chat transcripts are kept in API memory for the browser session, separately for each contract or all-contract search, and retain the latest 10 exchanges. Use **Clear memory** to remove a transcript; transcripts are also lost when the API restarts.
 
 ## Remember
 

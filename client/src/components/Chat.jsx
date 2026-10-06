@@ -1,69 +1,560 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
+
+import {
+  Alert,
+  Button,
+  Checkbox,
+  Collapse,
+  Input,
+  Select,
+  Space,
+  Spin,
+  Tag,
+  Typography
+} from 'antd';
+
 import { api } from '../api';
 
-const SUGGESTIONS = ['What are the termination terms?', 'Is the liability capped?', 'How does renewal work?'];
+const { Text, Paragraph } = Typography;
 
 export default function Chat({ doc }) {
-  const [msgs, setMsgs] = useState([]);
-  const [q, setQ] = useState('');
-  const [busy, setBusy] = useState(false);
-  const end = useRef();
-  useEffect(() => end.current?.scrollIntoView({ behavior: 'smooth' }), [msgs, busy]);
+  const [messages, setMessages] = useState([]);
 
-  const send = async (e, text = q) => {
-    e?.preventDefault();
-    const question = text.trim();
-    if (!question || busy) return;
-    const history = msgs.map(({ role, content }) => ({ role, content }));
-    setMsgs((m) => [...m, { role: 'user', content: question }]);
-    setQ('');
-    setBusy(true);
+  const [question, setQuestion] = useState('');
+
+  const [filters, setFilters] = useState({});
+
+  const [appliedFilters, setAppliedFilters] = useState({});
+
+  const [allContracts, setAllContracts] = useState(false);
+
+  const [loading, setLoading] = useState(true);
+
+  const [busy, setBusy] = useState(false);
+
+  const [error, setError] = useState('');
+
+  const sessionId = api.sessionId();
+
+  useEffect(() => {
+    loadHistory();
+  }, [doc.id, allContracts]);
+
+  async function loadHistory() {
+    setLoading(true);
+    setError('');
+
     try {
-      const { answer, sources } = await api.chat({ question, docId: doc.id, history });
-      setMsgs((m) => [...m, { role: 'assistant', content: answer, sources }]);
+      const scope = allContracts
+        ? 'all'
+        : doc.id;
+
+      const result = await api.chatHistory(
+        scope,
+        sessionId
+      );
+
+      setMessages(
+        result.messages || []
+      );
     } catch (err) {
-      setMsgs((m) => [...m, { role: 'assistant', content: err.message, sources: [] }]);
-    } finally { setBusy(false); }
-  };
+      setError(
+        err.message ||
+        'Could not load conversation'
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function sendMessage() {
+    const text = question.trim();
+
+    if (
+      !text ||
+      busy ||
+      loading
+    ) {
+      return;
+    }
+
+    setMessages((old) => [
+      ...old,
+      {
+        role: 'user',
+        content: text
+      }
+    ]);
+
+    setQuestion('');
+
+    setBusy(true);
+    setError('');
+
+    try {
+      const result = await api.chat({
+        question: text,
+
+        docId: allContracts
+          ? undefined
+          : doc.id,
+
+        filters: appliedFilters
+      });
+
+      setMessages((old) => [
+        ...old,
+        {
+          role: 'assistant',
+          content: result.answer,
+
+          sources:
+            result.sources || []
+        }
+      ]);
+    } catch (err) {
+      setError(
+        err.message ||
+        'Could not get an answer'
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function clearChat() {
+    try {
+      const scope = allContracts
+        ? 'all'
+        : doc.id;
+
+      await api.clearChat(
+        scope,
+        sessionId
+      );
+
+      setMessages([]);
+
+      setError('');
+    } catch (err) {
+      setError(
+        err.message ||
+        'Could not clear chat'
+      );
+    }
+  }
+
+  function changeFilter(
+    name,
+    value
+  ) {
+    setFilters((old) => ({
+      ...old,
+      [name]: value
+    }));
+  }
+
+  function applyFilters() {
+    setAppliedFilters(filters);
+  }
+
+  function clearFilters() {
+    setFilters({});
+    setAppliedFilters({});
+  }
+
+  const filterFields = [
+    ['party', 'Party'],
+    ['tag', 'Tag'],
+    [
+      'governingLaw',
+      'Governing Law'
+    ],
+    [
+      'jurisdiction',
+      'Jurisdiction'
+    ]
+  ];
 
   return (
-    <section className="flex min-h-0 flex-1 flex-col">
-      <div className="flex-1 space-y-5 overflow-y-auto px-8 py-6">
-        {!msgs.length && (
-          <div className="max-w-xl">
-            <p className="font-serif text-2xl">Ask about {doc.name}</p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {SUGGESTIONS.map((s) => (
-                <button key={s} onClick={() => send(null, s)} className="rounded-full border border-rule bg-white px-3 py-1.5 text-sm hover:border-brand">{s}</button>
-              ))}
-            </div>
-          </div>
+    <div
+      style={{
+        padding: 24,
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column'
+      }}
+    >
+      <Space
+        direction="vertical"
+        style={{
+          width: '100%',
+          flex: 1
+        }}
+      >
+        <Space wrap>
+          <Text strong>
+            {allContracts
+              ? 'All Contracts'
+              : doc.name}
+          </Text>
+
+          <Checkbox
+            checked={allContracts}
+            onChange={(e) =>
+              setAllContracts(
+                e.target.checked
+              )
+            }
+          >
+            Search all contracts
+          </Checkbox>
+
+          <Button
+            danger
+            size="small"
+            onClick={clearChat}
+            disabled={
+              !messages.length
+            }
+          >
+            Clear Chat
+          </Button>
+        </Space>
+
+        <Collapse
+          items={[
+            {
+              key: 'filters',
+
+              label:
+                'Metadata Filters',
+
+              children: (
+                <Space
+                  direction="vertical"
+                  style={{
+                    width: '100%'
+                  }}
+                >
+                  <Space wrap>
+                    <Select
+                      placeholder="Contract Type"
+                      value={
+                        filters.contractType ||
+                        undefined
+                      }
+                      onChange={(value) =>
+                        changeFilter(
+                          'contractType',
+                          value
+                        )
+                      }
+                      style={{
+                        width: 180
+                      }}
+                      options={[
+                        {
+                          value:
+                            'Employment Agreement',
+                          label:
+                            'Employment Agreement'
+                        },
+                        {
+                          value:
+                            'Service Agreement',
+                          label:
+                            'Service Agreement'
+                        },
+                        {
+                          value:
+                            'Non-Disclosure Agreement',
+                          label:
+                            'Non-Disclosure Agreement'
+                        },
+                        {
+                          value:
+                            'Vendor Agreement',
+                          label:
+                            'Vendor Agreement'
+                        }
+                      ]}
+                    />
+
+                    {filterFields.map(
+                      ([name, label]) => (
+                        <Input
+                          key={name}
+                          placeholder={label}
+                          value={
+                            filters[name] ||
+                            ''
+                          }
+                          onChange={(e) =>
+                            changeFilter(
+                              name,
+                              e.target.value
+                            )
+                          }
+                          style={{
+                            width: 170
+                          }}
+                        />
+                      )
+                    )}
+
+                    <Select
+                      placeholder="Status"
+                      value={
+                        filters.status ||
+                        undefined
+                      }
+                      onChange={(value) =>
+                        changeFilter(
+                          'status',
+                          value
+                        )
+                      }
+                      style={{
+                        width: 150
+                      }}
+                      options={[
+                        {
+                          value: 'Active',
+                          label: 'Active'
+                        },
+                        {
+                          value: 'Expired',
+                          label: 'Expired'
+                        },
+                        {
+                          value: 'Pending',
+                          label: 'Pending'
+                        }
+                      ]}
+                    />
+
+                    <Input
+                      type="date"
+                      value={
+                        filters.dateFrom ||
+                        ''
+                      }
+                      onChange={(e) =>
+                        changeFilter(
+                          'dateFrom',
+                          e.target.value
+                        )
+                      }
+                      style={{
+                        width: 160
+                      }}
+                    />
+
+                    <Input
+                      type="date"
+                      value={
+                        filters.dateTo ||
+                        ''
+                      }
+                      onChange={(e) =>
+                        changeFilter(
+                          'dateTo',
+                          e.target.value
+                        )
+                      }
+                      style={{
+                        width: 160
+                      }}
+                    />
+                  </Space>
+
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={
+                        applyFilters
+                      }
+                    >
+                      Apply Filters
+                    </Button>
+
+                    <Button
+                      onClick={
+                        clearFilters
+                      }
+                    >
+                      Clear Filters
+                    </Button>
+                  </Space>
+
+                  {Object.keys(
+                    appliedFilters
+                  ).length > 0 && (
+                    <Text type="secondary">
+                      Filters applied
+                    </Text>
+                  )}
+                </Space>
+              )
+            }
+          ]}
+        />
+
+        {error && (
+          <Alert
+            message={error}
+            type="error"
+            showIcon
+          />
         )}
-        {msgs.map((m, i) => m.role === 'user' ? (
-          <p key={i} className="ml-auto w-fit max-w-xl rounded-lg bg-brand px-4 py-2 text-white">{m.content}</p>
-        ) : (
-          <div key={i} className="max-w-2xl">
-            <p className="whitespace-pre-wrap leading-relaxed">{m.content}</p>
-            {m.sources?.length > 0 && (
-              <details className="mt-2 text-sm text-ink/70">
-                <summary className="cursor-pointer">Sources ({m.sources.length})</summary>
-                {m.sources.map((s, j) => (
-                  <p key={j} className="mt-2 border-l-2 border-rule pl-3">
-                    <b>[{j + 1}]</b> {s.text} <span className="text-ink/50">match {Math.round(s.score * 100)}%</span>
-                  </p>
-                ))}
-              </details>
+
+        <div
+          style={{
+            flex: 1,
+            overflowY: 'auto',
+            padding: '10px 0'
+          }}
+        >
+          {loading && (
+            <Space>
+              <Spin />
+
+              <Text>
+                Loading previous conversation...
+              </Text>
+            </Space>
+          )}
+
+          {!loading &&
+            messages.map(
+              (message, index) => (
+                <div
+                  key={index}
+                  style={{
+                    marginBottom: 16
+                  }}
+                >
+                  <Tag
+                    color={
+                      message.role ===
+                      'user'
+                        ? 'blue'
+                        : 'green'
+                    }
+                  >
+                    {message.role ===
+                    'user'
+                      ? 'You'
+                      : 'AI'}
+                  </Tag>
+
+                  <Paragraph
+                    style={{
+                      whiteSpace:
+                        'pre-wrap'
+                    }}
+                  >
+                    {message.content}
+                  </Paragraph>
+
+                  {message.sources
+                    ?.length > 0 && (
+                    <Collapse
+                      size="small"
+                      items={[
+                        {
+                          key: 'sources',
+
+                          label:
+                            `Sources (${message.sources.length})`,
+
+                          children:
+                            message.sources.map(
+                              (
+                                source,
+                                i
+                              ) => (
+                                <div
+                                  key={i}
+                                  style={{
+                                    marginBottom: 10
+                                  }}
+                                >
+                                  <Text strong>
+                                    [{i + 1}]{' '}
+                                    {source.docName ||
+                                      ''}
+                                  </Text>
+
+                                  <Paragraph>
+                                    {
+                                      source.text
+                                    }
+                                  </Paragraph>
+
+                                  <Text type="secondary">
+                                    Match:{' '}
+                                    {Math.round(
+                                      source.score *
+                                        100
+                                    )}
+                                    %
+                                  </Text>
+                                </div>
+                              )
+                            )
+                        }
+                      ]}
+                    />
+                  )}
+                </div>
+              )
             )}
-          </div>
-        ))}
-        {busy && <p className="text-ink/50">Searching the contract…</p>}
-        <div ref={end} />
-      </div>
-      <form onSubmit={send} className="flex gap-2 border-t border-rule bg-white p-4">
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Ask about a clause, obligation or deadline"
-          className="flex-1 rounded border border-rule px-3 py-2 outline-none focus:border-brand focus-visible:ring-2 focus-visible:ring-brand/30" />
-        <button disabled={busy} className="rounded bg-brand px-5 py-2 text-sm font-medium text-white disabled:opacity-60">Ask</button>
-      </form>
-    </section>
+
+          {busy && (
+            <Space>
+              <Spin size="small" />
+
+              <Text>
+                Searching contracts...
+              </Text>
+            </Space>
+          )}
+        </div>
+
+        <Space.Compact
+          style={{
+            width: '100%'
+          }}
+        >
+          <Input
+            value={question}
+            onChange={(e) =>
+              setQuestion(
+                e.target.value
+              )
+            }
+            onPressEnter={sendMessage}
+            placeholder="Ask about a clause, obligation or deadline"
+            disabled={
+              busy || loading
+            }
+          />
+
+          <Button
+            type="primary"
+            onClick={sendMessage}
+            loading={busy}
+            disabled={
+              loading ||
+              !question.trim()
+            }
+          >
+            Ask
+          </Button>
+        </Space.Compact>
+      </Space>
+    </div>
   );
 }

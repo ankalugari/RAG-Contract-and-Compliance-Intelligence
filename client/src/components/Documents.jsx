@@ -1,48 +1,218 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
+
+import {
+  Button,
+  Card,
+  List,
+  Typography,
+  Upload,
+  message,
+  Space,
+  Tag
+} from 'antd';
+
+import {
+  UploadOutlined,
+  DeleteOutlined,
+  FileTextOutlined
+} from '@ant-design/icons';
+
 import { api } from '../api';
 
-export default function Documents({ docs, active, onSelect, onChange }) {
-  const input = useRef();
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
+import MetadataEditor from './MetadataEditor';
 
-  const upload = async (file) => {
-    if (!file) return;
-    setBusy(true);
-    setError('');
+const { Title } = Typography;
+
+export default function Documents({
+  docs,
+  active,
+  onSelect,
+  onUploadSuccess,
+  onChange,
+  onMetadataSave
+}) {
+  const [loading, setLoading] = useState(false);
+
+  async function uploadFile(file) {
+    if (!file) {
+      return false;
+    }
+
+    setLoading(true);
+
     try {
-      onChange((await api.upload(file)).id); 
+      const result = await api.upload(file);
+
+      await onUploadSuccess(result.id);
+
+      message.success(
+        'Contract uploaded successfully'
+      );
+    } catch (error) {
+      console.error(
+        'Upload error:',
+        error
+      );
+
+      message.error(
+        error.message ||
+        'Upload failed'
+      );
+    } finally {
+      setLoading(false);
     }
-    catch (e) { 
-      setError(e.message); 
+
+    return false;
+  }
+
+  async function deleteDocument(id) {
+    try {
+      await api.remove(id);
+
+      const updatedDocs =
+        await api.docs();
+
+      onChange();
+
+      if (active === id) {
+        onSelect(
+          updatedDocs[0]?.id || null
+        );
+      }
+
+      message.success(
+        'Contract deleted'
+      );
+    } catch (error) {
+      console.error(
+        'Delete error:',
+        error
+      );
+
+      message.error(
+        error.message ||
+        'Delete failed'
+      );
     }
-    finally { 
-      setBusy(false); 
-      input.current.value = ''; 
-    }
-  };
+  }
+
+  const activeDocument = docs.find(
+    (doc) => doc.id === active
+  );
 
   return (
-    <aside className="flex w-72 shrink-0 flex-col gap-5 bg-ink p-5 text-white">
-      <h1 className="font-serif text-xl leading-snug">Contract and Compliance Intelligence</h1>
-      <button onClick={() => input.current.click()} disabled={busy}
-        className="rounded bg-white px-3 py-2 text-sm font-medium text-ink disabled:opacity-60">
-        {busy ? 'Reading and indexing…' : 'Upload contract'}
-      </button>
-      <input ref={input} type="file" accept=".pdf,.txt,.md" hidden onChange={(e) => upload(e.target.files[0])} />
-      {error && <p className="text-sm text-red-300">{error}</p>}
-      <ul className="space-y-1 overflow-y-auto">
-        {docs.map((d) => (
-          <li key={d.id} className={`flex items-center rounded px-3 py-2 text-sm ${d.id === active ? 'bg-white/15' : 'hover:bg-white/10'}`}>
-            <button onClick={() => onSelect(d.id)} className="min-w-0 flex-1 text-left">
-              <span className="block truncate">{d.name}</span>
-              <span className="text-xs text-white/60">{d.chunks} passages indexed</span>
-            </button>
-            <button aria-label={`Remove ${d.name}`} className="ml-2 text-white/50 hover:text-white"
-              onClick={async () => { await api.remove(d.id); onChange(); }}>✕</button>
-          </li>
-        ))}
-      </ul>
-    </aside>
+    <div
+      style={{
+        width: 320,
+        padding: 16,
+        borderRight:
+          '1px solid #ddd',
+        height: '100vh',
+        overflowY: 'auto'
+      }}
+    >
+      <Title level={4}>
+        Contract Intelligence
+      </Title>
+
+      <Upload
+        accept=".pdf,.txt,.md"
+        showUploadList={false}
+        beforeUpload={uploadFile}
+      >
+        <Button
+          type="primary"
+          icon={
+            <UploadOutlined />
+          }
+          loading={loading}
+          disabled={loading}
+          block
+        >
+          {loading
+            ? 'Uploading...'
+            : 'Upload Contract'}
+        </Button>
+      </Upload>
+
+      <div
+        style={{
+          marginTop: 20
+        }}
+      >
+        <Title level={5}>
+          Contracts
+        </Title>
+
+        <List
+          dataSource={docs}
+          locale={{
+            emptyText:
+              'No contracts uploaded'
+          }}
+          renderItem={(doc) => (
+            <List.Item
+              style={{
+                cursor: 'pointer',
+                padding: 10,
+                background:
+                  active === doc.id
+                    ? '#f0f5ff'
+                    : 'transparent'
+              }}
+              onClick={() =>
+                onSelect(doc.id)
+              }
+              actions={[
+                <Button
+                  key="delete"
+                  type="text"
+                  danger
+                  icon={
+                    <DeleteOutlined />
+                  }
+                  onClick={(event) => {
+                    event.stopPropagation();
+
+                    deleteDocument(
+                      doc.id
+                    );
+                  }}
+                />
+              ]}
+            >
+              <List.Item.Meta
+                avatar={
+                  <FileTextOutlined />
+                }
+                title={doc.name}
+                description={
+                  <Space>
+                    <Tag>
+                      {doc.chunks || 0} chunks
+                    </Tag>
+                  </Space>
+                }
+              />
+            </List.Item>
+          )}
+        />
+      </div>
+
+      {activeDocument && (
+        <Card
+          title="Contract Metadata"
+          size="small"
+          style={{
+            marginTop: 20
+          }}
+        >
+          <MetadataEditor
+            doc={activeDocument}
+            onSave={onMetadataSave}
+          />
+        </Card>
+      )}
+    </div>
   );
 }
