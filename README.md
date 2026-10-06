@@ -1,79 +1,196 @@
-# Contract and Compliance Intelligence
+# RAG Contract and Compliance Intelligence
 
-Upload a contract and ask questions about it. The app answers from the contract and shows where the answer came from. It can also check the contract for risky or missing points.
+An AI-based application for uploading contracts, asking questions, and performing compliance reviews using RAG and an LLM.
 
-## How it works
+## Features
 
-**1. Upload and index**
+- Upload PDF, TXT, and Markdown contracts
+- Automatic contract metadata extraction
+- Ask questions about contracts
+- RAG-based search
+- Metadata filtering
+- Chat history
+- Long-term memory
+- Compliance review
+- Contract source references
+- Edit contract metadata
+- Delete contracts
+- MySQL database storage
 
-- You upload a PDF or text file.
-- Contract type, parties, dates, governing law, jurisdiction, status, and tags are extracted when possible.
-- The text is divided into overlapping passages and embedded for semantic search.
-- Extracted metadata is editable in the **Contract metadata** panel. Extraction failures do not block upload.
+## Technologies Used
 
-**2. Ask a question**
+### Frontend
 
-- Search the selected contract or all uploaded contracts, with optional metadata and effective-date filters.
-- Your question is matched with the 5 closest passages that satisfy the filters.
-- The AI (Groq) reads only those pieces and writes the answer.
-- If the answer is not in the contract, it says "Not found in the contract."
+- React.js
+- Vite
+- JavaScript
+- Ant Design
+- Tailwind CSS
 
-**3. Review**
+### Backend
 
-- The app checks 8 important points, like termination, payment and data protection, in the selected contract.
-- The AI marks each one as present or missing, with low, medium or high risk.
+- Node.js
+- Express.js
+- JavaScript
+- Groq API
+- RAG
 
-## Run it
+### Database
 
-Open two terminals.
+- MySQL
 
-**Server**
+### AI
 
-```bash
-cd server
-npm install
-cp .env.example .env
-```
+- Groq LLM
+- Embeddings
+- Vector similarity search
+- Retrieval-Augmented Generation (RAG)
 
-Put your key in `.env`:
+## Project Structure
 
-```
-GROQ_API_KEY=your_key_here
-```
+```text
+contract-intelligence/
+│
+├── client/
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── Chat.jsx
+│   │   │   ├── Documents.jsx
+│   │   │   ├── MetadataEditor.jsx
+│   │   │   └── Review.jsx
+│   │   │
+│   │   ├── api.js
+│   │   ├── App.jsx
+│   │   ├── index.css
+│   │   └── main.jsx
+│   │
+│   ├── package.json
+│   └── vite.config.js
+│
+└── server/
+    ├── index.js
+    ├── llm.js
+    ├── rag.js
+    ├── metadata.js
+    ├── db.js
+    ├── metadata.test.js
+    └── package.json
+Application Flow
+Upload Contract
+      ↓
+Extract Text
+      ↓
+Create Embeddings
+      ↓
+Store Contract Chunks
+      ↓
+Extract Metadata
+      ↓
+Ask Questions
+      ↓
+Retrieve Relevant Chunks
+      ↓
+Apply Metadata Filters
+      ↓
+Send Context to Groq LLM
+      ↓
+Generate Answer
+RAG Flow
+User Question
+      ↓
+Create Query Embedding
+      ↓
+Search Contract Chunks
+      ↓
+Find Relevant Chunks
+      ↓
+Send Context to Groq
+      ↓
+Generate Answer
+Memory
 
-The default Groq model is `openai/gpt-oss-20b`.
+The application stores useful user information as long-term memory.
 
-Then run:
+User Message
+      ↓
+Extract Useful Information
+      ↓
+Save Memory
+      ↓
+Store in MySQL
+      ↓
+Retrieve in Future Conversations
 
-```bash
-node index.js
-```
+Chat history and long-term memory are stored separately.
 
-**Page**
+Metadata Filtering
 
-```bash
+Metadata filters can be used to narrow contract searches.
+
+Available filters:
+
+Contract Type
+Party
+Tag
+Governing Law
+Jurisdiction
+Status
+Effective Date
+Expiration Date
+Compliance Review
+
+The application checks contracts for:
+
+Termination
+Liability Cap
+Indemnification
+Confidentiality
+Payment Terms
+Renewal
+Data Protection
+Governing Law
+Installation
+1. Clone the Repository
+git clone <your-repository-url>
+cd contract-intelligence
+2. Install Frontend Dependencies
 cd client
 npm install
+3. Install Backend Dependencies
+cd ../server
+npm install
+4. Configure Environment Variables
+
+Create a .env file inside the server folder.
+
+GROQ_API_KEY=your_groq_api_key
+GROQ_MODEL=openai/gpt-oss-20b
+
+DB_HOST=localhost
+DB_USER=contract_user
+DB_PASSWORD=your_database_password
+DB_NAME=contract_intelligence
+5. Start the Backend
+cd server
+npm start
+6. Start the Frontend
+
+Open another terminal:
+
+cd client
 npm run dev
-```
 
-Open http://localhost:5173
+Open the URL shown by Vite in the terminal.
 
-## Deploy
+Tech Stack
+React + Vite
+      ↓
+Ant Design + Tailwind CSS
+      ↓
+Node.js + Express
+      ↓
+Groq LLM + RAG
+      ↓
+MySQL
 
-The frontend and API deploy together as one Vercel project using Vercel Services. Push this repository to GitHub and import it into Vercel. Keep the project root set to the repository root so Vercel reads `vercel.json`; it builds `client/` and `server/` as services and routes `/api/*` to Express, with all other paths going to the Vite frontend.
-
-Add these environment variables in the Vercel project settings for each environment you plan to deploy (Production, Preview, and Development):
-
-- `GROQ_API_KEY`: your Groq API key. Keep it server-side; do not prefix it with `VITE_`.
-- `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, and `DB_NAME`: connection details for a MySQL database reachable from Vercel.
-
-The database must be provisioned separately and have the application's tables set up. Both app services share one Vercel deployment and URL, but MySQL remains an external dependency. The embedding model is downloaded and loaded by the API at runtime, so a cold start can take longer than serving the frontend. `render.yaml` remains available for deploying the same app on Render instead.
-
-Chat transcripts are kept in API memory for the browser session, separately for each contract or all-contract search, and retain the latest 10 exchanges. Use **Clear memory** to remove a transcript; transcripts are also lost when the API restarts.
-
-## Remember
-
-- Restart the server after changing `.env`.
-- If the server restarts, upload your file again.
-- This is not legal advice.
+You can copy the contents directly into your **`README.md`** file.

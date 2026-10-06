@@ -1,4 +1,9 @@
-import { useEffect, useState } from 'react';
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  useState
+} from 'react';
 
 import {
   Alert,
@@ -13,9 +18,13 @@ import { api } from './api';
 
 import Documents from './components/Documents';
 
-import Chat from './components/Chat';
+const Chat = lazy(
+  () => import('./components/Chat')
+);
 
-import Review from './components/Review';
+const Review = lazy(
+  () => import('./components/Review')
+);
 
 const { Header, Content, Sider } = Layout;
 
@@ -96,11 +105,13 @@ export default function App() {
 
   return (
     <Layout
+      className="contract-app"
       style={{
         minHeight: '100vh'
       }}
     >
       <Sider
+        className="contract-sider"
         width={320}
         theme="light"
       >
@@ -116,12 +127,13 @@ export default function App() {
 
       <Layout>
         <Header
+          className="contract-header"
           style={{
             background: '#fff',
             padding: '0 24px'
           }}
         >
-          <Space>
+          <Space size="middle" wrap>
             <Title
               level={4}
               style={{
@@ -156,6 +168,7 @@ export default function App() {
         </Header>
 
         <Content
+          className="contract-content"
           style={{
             padding: 24
           }}
@@ -176,15 +189,19 @@ export default function App() {
               description="Upload a contract to begin"
             />
           ) : tab === 'ask' ? (
-            <Chat
-              key={activeDocument.id}
-              doc={activeDocument}
-            />
+            <Suspense fallback={<div>Loading...</div>}>
+              <Chat
+                key={activeDocument.id}
+                doc={activeDocument}
+              />
+            </Suspense>
           ) : (
-            <Review
-              key={activeDocument.id}
-              doc={activeDocument}
-            />
+            <Suspense fallback={<div>Loading...</div>}>
+              <Review
+                key={activeDocument.id}
+                doc={activeDocument}
+              />
+            </Suspense>
           )}
         </Content>
       </Layout>

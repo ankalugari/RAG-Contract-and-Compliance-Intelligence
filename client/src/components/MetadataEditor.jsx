@@ -2,15 +2,12 @@ import { useEffect, useState } from 'react';
 import {
   Button,
   Card,
-  DatePicker,
   Form,
   Input,
   Select,
   Space,
   message
 } from 'antd';
-
-import dayjs from 'dayjs';
 
 import { api } from '../api';
 
@@ -48,14 +45,10 @@ export default function MetadataEditor({ doc, onSaved }) {
         metadata.status || '',
 
       effectiveDate:
-        metadata.effectiveDate
-          ? dayjs(metadata.effectiveDate)
-          : null,
+        metadata.effectiveDate || '',
 
       expirationDate:
-        metadata.expirationDate
-          ? dayjs(metadata.expirationDate)
-          : null
+        metadata.expirationDate || ''
     });
   }, [doc, form]);
 
@@ -94,19 +87,9 @@ export default function MetadataEditor({ doc, onSaved }) {
         status:
           values.status || '',
 
-        effectiveDate:
-          values.effectiveDate
-            ? values.effectiveDate.format(
-                'YYYY-MM-DD'
-              )
-            : '',
+        effectiveDate: values.effectiveDate || '',
 
-        expirationDate:
-          values.expirationDate
-            ? values.expirationDate.format(
-                'YYYY-MM-DD'
-              )
-            : ''
+        expirationDate: values.expirationDate || ''
       };
 
       const updatedDoc =
@@ -219,20 +202,14 @@ export default function MetadataEditor({ doc, onSaved }) {
           label="Effective Date"
           name="effectiveDate"
         >
-          <DatePicker
-            style={{ width: '100%' }}
-            format="YYYY-MM-DD"
-          />
+          <Input type="date" />
         </Form.Item>
 
         <Form.Item
           label="Expiration Date"
           name="expirationDate"
         >
-          <DatePicker
-            style={{ width: '100%' }}
-            format="YYYY-MM-DD"
-          />
+          <Input type="date" />
         </Form.Item>
 
         <Space>

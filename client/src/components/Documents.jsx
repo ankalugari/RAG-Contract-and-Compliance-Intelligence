@@ -102,6 +102,7 @@ export default function Documents({
 
   return (
     <div
+      className="contract-sidebar"
       style={{
         width: 320,
         padding: 16,

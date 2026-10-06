@@ -8,31 +8,13 @@ import { fileURLToPath } from 'node:url';
 import pdf from 'pdf-parse/lib/pdf-parse.js';
 import { randomUUID } from 'crypto';
 
-import pool, {
-  testDatabase
-} from './db.js';
+import pool, { testDatabase} from './db.js';
 
-import {
-  docs,
-  ingest,
-  remove,
-  retrieve,
-  updateMetadata,
-  loadDocuments
-} from './rag.js';
+import {docs,ingest,remove,retrieve,updateMetadata,loadDocuments} from './rag.js';
 
-import {
-  answer,
-  extractMetadata,
-  extractMemory,
-  isContractQuestion,
-  rewrite,
-  review
-} from './llm.js';
+import {answer,extractMetadata,extractMemory,isContractQuestion,rewrite,review} from './llm.js';
 
-import {
-  normalizeFilters
-} from './metadata.js';
+import {normalizeFilters} from './metadata.js';
 
 const app = express();
 const clientDist = path.resolve(
