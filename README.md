@@ -75,7 +75,10 @@ contract-intelligence/
     ├── db.js
     ├── metadata.test.js
     └── package.json
-Application Flow
+```
+
+## Application Flow
+```
 Upload Contract
       ↓
 Extract Text
@@ -95,7 +98,10 @@ Apply Metadata Filters
 Send Context to Groq LLM
       ↓
 Generate Answer
-RAG Flow
+```
+
+## RAG Flow
+```
 User Question
       ↓
 Create Query Embedding
@@ -107,8 +113,10 @@ Find Relevant Chunks
 Send Context to Groq
       ↓
 Generate Answer
-Memory
+```
 
+## Memory
+```
 The application stores useful user information as long-term memory.
 
 User Message
@@ -122,9 +130,9 @@ Store in MySQL
 Retrieve in Future Conversations
 
 Chat history and long-term memory are stored separately.
-
-Metadata Filtering
-
+```
+## Metadata Filtering
+```
 Metadata filters can be used to narrow contract searches.
 
 Available filters:
@@ -138,7 +146,8 @@ Status
 Effective Date
 Expiration Date
 Compliance Review
-
+```
+```
 The application checks contracts for:
 
 Termination
@@ -174,7 +183,9 @@ DB_NAME=contract_intelligence
 cd server
 npm start
 6. Start the Frontend
+```
 
+```
 Open another terminal:
 
 cd client
@@ -193,3 +204,4 @@ Groq LLM + RAG
       ↓
 MySQL
 
+```
