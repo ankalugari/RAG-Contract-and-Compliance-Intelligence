@@ -147,9 +147,9 @@ Effective Date
 Expiration Date
 Compliance Review
 ```
-```
-The application checks contracts for:
 
+## The application checks contracts for:
+```
 Termination
 Liability Cap
 Indemnification
