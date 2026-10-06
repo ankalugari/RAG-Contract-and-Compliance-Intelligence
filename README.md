@@ -189,7 +189,8 @@ npm start
 ```
 cd client
 npm run dev
-
+```
+```
 Open the URL shown by Vite in the terminal.
 
 Tech Stack
