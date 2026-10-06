@@ -193,4 +193,3 @@ Groq LLM + RAG
       ↓
 MySQL
 
-You can copy the contents directly into your **`README.md`** file.
