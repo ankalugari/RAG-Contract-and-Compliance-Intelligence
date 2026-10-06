@@ -3,6 +3,8 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import multer from 'multer';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import pdf from 'pdf-parse/lib/pdf-parse.js';
 import { randomUUID } from 'crypto';
 
@@ -33,6 +35,10 @@ import {
 } from './metadata.js';
 
 const app = express();
+const clientDist = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  '../client/dist'
+);
 
 app.use(cors());
 app.use(express.json());
@@ -655,6 +661,29 @@ app.post(
     }
   }
 );
+
+app.use('/api', (req, res) => {
+  res.status(404).json({
+    error: 'API route not found'
+  });
+});
+
+app.use(express.static(clientDist));
+
+app.use((req, res, next) => {
+  if (req.method !== 'GET') {
+    return next();
+  }
+
+  res.sendFile(
+    path.join(clientDist, 'index.html'),
+    (error) => {
+      if (error) {
+        next(error);
+      }
+    }
+  );
+});
 
 app.use(
   (

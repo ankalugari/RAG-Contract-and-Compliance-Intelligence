@@ -2,10 +2,11 @@
 import mysql from 'mysql2/promise';
 
 const pool = mysql.createPool({
-  host: 'localhost',
-  user: 'contract_user',
-  password: 'contract123',
-  database: 'contract_intelligence',
+  host: process.env.DB_HOST || 'localhost',
+  port: Number(process.env.DB_PORT || 3306),
+  user: process.env.DB_USER || 'contract_user',
+  password: process.env.DB_PASSWORD || 'contract123',
+  database: process.env.DB_NAME || 'contract_intelligence',
   waitForConnections: true,
   connectionLimit: 10
 });

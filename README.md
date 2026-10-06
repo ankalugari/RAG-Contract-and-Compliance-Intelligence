@@ -61,22 +61,14 @@ Open http://localhost:5173
 
 ## Deploy
 
-The frontend and API are deployed separately: Netlify hosts the Vite page, and Render runs the Express server.
+The frontend and API deploy together as one Vercel project using Vercel Services. Push this repository to GitHub and import it into Vercel. Keep the project root set to the repository root so Vercel reads `vercel.json`; it builds `client/` and `server/` as services and routes `/api/*` to Express, with all other paths going to the Vite frontend.
 
-**1. Deploy the API on Render**
+Add these environment variables in the Vercel project settings for each environment you plan to deploy (Production, Preview, and Development):
 
-- Push this repository to GitHub.
-- In Render, choose **New** -> **Blueprint**, connect the repository, and apply the settings in `render.yaml`.
-- Add your Groq API key as the `GROQ_API_KEY` environment variable for the `contract-intelligence-api` service. Keep it in Render's environment settings; do not put it in the frontend.
-- Wait for the service to deploy, then copy its public URL, such as `https://contract-intelligence-api.onrender.com`.
+- `GROQ_API_KEY`: your Groq API key. Keep it server-side; do not prefix it with `VITE_`.
+- `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, and `DB_NAME`: connection details for a MySQL database reachable from Vercel.
 
-**2. Deploy the page on Netlify**
-
-- Import the same GitHub repository as a new Netlify site. The root `netlify.toml` configures the Vite build and publish directory.
-- In the site's environment variables, add `VITE_API_URL` with the Render URL followed by `/api`, for example `https://contract-intelligence-api.onrender.com/api`.
-- Trigger a new deploy so Vite includes that API URL in the built page.
-
-After both deploys finish, open the Netlify URL and upload the contract again. Documents, extracted metadata, and vectors are kept in server memory and disappear when the API restarts.
+The database must be provisioned separately and have the application's tables set up. Both app services share one Vercel deployment and URL, but MySQL remains an external dependency. The embedding model is downloaded and loaded by the API at runtime, so a cold start can take longer than serving the frontend. `render.yaml` remains available for deploying the same app on Render instead.
 
 Chat transcripts are kept in API memory for the browser session, separately for each contract or all-contract search, and retain the latest 10 exchanges. Use **Clear memory** to remove a transcript; transcripts are also lost when the API restarts.
 

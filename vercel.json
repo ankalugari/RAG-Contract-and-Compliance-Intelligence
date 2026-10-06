@@ -8,7 +8,7 @@
     "contract-intelligence-api": {
       "root": "server",
       "framework": "express",
-      "buildCommand": "npm install"
+      "entrypoint": "index.js"
     }
   },
   "rewrites": [

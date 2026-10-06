@@ -1,13 +1,22 @@
 services:
   - type: web
-    name: contract-intelligence-api
+    name: contract-intelligence
     runtime: node
-    rootDir: server
-    buildCommand: npm install
-    startCommand: npm start
+    buildCommand: npm ci --prefix client && npm run build --prefix client && npm ci --prefix server
+    startCommand: npm start --prefix server
     healthCheckPath: /api/docs
     envVars:
       - key: GROQ_API_KEY
         sync: false
       - key: GROQ_MODEL
         value: openai/gpt-oss-20b
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        value: 3306
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_NAME
+        sync: false
